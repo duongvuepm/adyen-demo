@@ -4,7 +4,9 @@ import com.adyen.model.notification.NotificationRequest;
 import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.util.HMACValidator;
 import java.security.SignatureException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.adyendemo.services.OrderService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,18 +16,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @Slf4j
+@RequiredArgsConstructor
 @RestController
-@RequestMapping("/webhook")
+@RequestMapping("/webhooks")
 public class WebhookController {
 
-  @Value("${app.adyen.hmacKey:myKey}")
+  private final OrderService orderService;
+
+  @Value("${app.adyen.hmacKey}")
   private String hmacKey;
 
-  @PostMapping("/webhooks/notifications")
-  public ResponseEntity<String> webhooks(@RequestBody String json) throws Exception {
-
-    // from JSON string to object
-    var notificationRequest = NotificationRequest.fromJson(json);
+  @PostMapping("/notifications")
+  public ResponseEntity<String> webhooks(@RequestBody NotificationRequest notificationRequest) throws Exception {
 
     // fetch first (and only) NotificationRequestItem
     var notificationRequestItem = notificationRequest.getNotificationItems().stream().findFirst();
@@ -72,6 +74,8 @@ public class WebhookController {
   void consumeEvent(NotificationRequestItem item) {
 
     log.info("Processing event: {}", item.toString());
+
+    this.orderService.completeOrder(item.getMerchantReference(), item.getEventCode());
   }
 
   public HMACValidator getHmacValidator() {

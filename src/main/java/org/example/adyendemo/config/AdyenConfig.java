@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AdyenConfig {
 
-  @Value("${app.adyen.api-key}")
+  @Value("${app.adyen.apiKey}")
   private String adyenApiKey;
 
   @Bean
